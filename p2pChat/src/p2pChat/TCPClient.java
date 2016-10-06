@@ -91,30 +91,46 @@ public class TCPClient //extends thread
         ip = args[0].toString();
         port = Integer.parseInt(args[1].toString());
         fileName = args[2];
-        Socket connect = new Socket(ip, port);
-        OutputStream oStream = connect.getOuputStream();
-        DataOutputStream dOStream = new DataOutputStream(oStream);
+        run(ip, port, fileName);
+        
     }
 
-    public void run()
+    public void run(String ip, int port, String fileName)
     {
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        System.out.println("Select an option:");
-        System.out.println("1 - Recieve file");
-        System.out.println("2 - Send file");
-        String clientChoice;
-        while((clientChoice = in.readLine() != null))
+        try
         {
-            if(!clientChoice.matches("^d{1,2}"))
-            {
-                System.out.printLn("Please enter either 1 or 2 to select an option");
-                clientChoice = in.readLine();
-            }
-            switch(clientChoice)
-            {
-                case "1": //recieve file code
-                case "2": //send file code
-            }
+            Socket connect = new Socket(ip, port);
+            PrintWriter reqFile = new PrintWriter(connect.getOutputStream());
+            DataInputStream recFile = new DataInputStream(connect.getInputStream());
+            reqFile.flush();
+            try
+                {
+                    //Save image and determine size
+                    FileOutputStream fOStream = new FileOutputStream("picRec.png");
+                    int fileLength = recFile.readInt();
+                    if(fileLength > 0)
+                    {
+                        byte[] fileBytes = new byte[fileLength];
+                        recFile.readFully(fileBytes, 0, fileBytes.length);
+                        //Write file to client
+                        for(byte b : fileBytes)
+                        {
+                            fOStream.write(b);
+                        }
+                        System.out.println("File received successfully. Socket closed");
+                    }
+                }
+                catch(Exception ex)
+                {
+                    System.out.println("ERROR: failed to process file");
+                    System.exit(0);
+                }
         }
+        catch(Exception ex)
+        {
+            System.out.println("ERROR: failed to read from stream");
+        }
+        
+        
     }
 }

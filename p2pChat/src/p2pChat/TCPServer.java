@@ -7,6 +7,8 @@
  */
 import java.net.*;
 import java.io.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 public class TCPServer
 {
@@ -57,22 +59,46 @@ public class TCPServer
             while(true)
             {
                 ServerSocket serverSocket = new ServerSocket(port);
+                System.out.println("Server is running on port " + port);
+                
+                //connect to client
                 Socket clientSocket = serverSocket.accept();
                 String serverAddress = serverSocket.getInetAddress().toString();
                 //sSocket.close();
-                InputStream inStream = clientSocket.getInputStream();
-                DataInputStream clientData = new DataInputStream(inStream);
-                String fileName = clientData.readUTF();
-                //File myFile = new File();
-                //wait for request
-                //find file
-                //send file
-                //messageOK
+                try
+                {
+                    InputStream inStream = clientSocket.getInputStream();
+                    DataInputStream clientData = new DataInputStream(inStream);
+                    DataOutputStream outStream = new DataOutputStream(clientSocket.getOutputStream());
+                    BufferedReader receivePacket = new BufferedReader (new InputStreamReader(clientSocket.getInputStream()));
+                    String fileName = clientData.readUTF();
+                    File myFile = new File("files/" + fileName);
+                
+                    BufferedImage originalImg = ImageIO.read(myFile);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(originalImg, "png", baos);
+                    byte[] imageInBytes = baos.toByteArray();
+                    
+                    outStream.writeInt(imageInBytes.length);
+                    outStream.write(imageInBytes);
+                    
+                    System.out.println("The file has been sent.... Closing Socket.");
+                }
+                catch(IOException e)
+                {
+                    System.out.println("\nError in TCP. Please try again.");
+                }
+                //Close streams and socket.
+                clientSocket.close();
+            }   
+            
             }
+            catch (IOException e) 
+            {
+            System.out.println("\nConnection error, please try again.");
+            }
+            
         }
-        catch(Exception ex)
-        {
-            System.out.println(ex.getMessage());
-        }
+        
     }
-}
+
